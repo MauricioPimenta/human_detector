@@ -5,8 +5,6 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import LifecycleNode
 from launch_ros.events.lifecycle import ChangeState
 from lifecycle_msgs.msg import Transition
-from ament_index_python.packages import get_package_share_directory
-import os
 
 
 def generate_launch_description():

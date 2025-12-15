@@ -1,8 +1,8 @@
 human_detector_parameters:
   camera_frame_id:
     type: string
-    default_value: "camera_link"
-    read_only: true
+    default_value: "camera_0_color_optical_frame"
+    read_only: false #true
     description: "Name of frame containing the camera."
   detected_human_frame_id:
     type: string
