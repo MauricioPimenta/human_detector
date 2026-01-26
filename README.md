@@ -1,4 +1,5 @@
 # Human Detector for ROS 2
+
 ![rolling](https://github.com/Wiktor-99/human_detector/actions/workflows/build_and_test_rolling.yaml/badge.svg)
 ![jazzy](https://github.com/Wiktor-99/human_detector/actions/workflows/build_and_test_jazzy.yaml/badge.svg)
 ![iron](https://github.com/Wiktor-99/human_detector/actions/workflows/build_and_test_iron.yaml/badge.svg)
@@ -11,25 +12,57 @@ The package has been tested with the RealSense **D435i** camera along with the c
 ## Results
 
 ### Simulation
+
 ![detected human](/images/detected_human.png " ")
 
 Visible point cloud is added only for visualization purposes and it is not part of package.
 
 ### Real world example
-![real world example](/images/real_world_example.png " ")
 
+![real world example](/images/real_world_example.png " ")
 
 ## Setup
 
+On Ubuntu 24, we can't install mediapipe directly because it needs a version of Scipy not yet available in Ubuntu24. So we need to create a Python virtual environment to install mediapipe in order to run human_detector.
+
+### Create the Virtual Environment
+
+First, ensure that `python3-venv` is installed:
+
+```bash
+sudo apt update && sudo apt install python3-venv
+```
+
+Then, create the virtual environment for our mediapipe installation:
+
+```bash
+python3 -m venv ~/mediapipe_env
+```
+
+
+To build and run
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source ~/clearpath/setup.bash
+source ~/ros2_ws/install/setup.bash
+source ~/mediapipe_env/bin/activate   # ativa o venv
+rosdep install --from-paths src --ignore-src -r -y
+colcon build
+ros2 run <seu_pacote> <seu_node>
+
+```
+
 ### Clone the Repository
+
 ```bash
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
 git clone https://github.com/Wiktor-99/human_detector.git
 cd ..
 rosdep install --from-paths src --ignore-src -r -y
-
 ```
+
 ### Build
 
 ```bash
@@ -37,11 +70,15 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ```
 
 ## Running
+
 To start, open a terminal and execute the following command:
+
 ```bash
 ros2 run human_detector human_detector
 ```
+
 Next, open a second terminal and enter the following commands:
+
 ```bash
 ros2 lifecycle set /human_detector configure
 ros2 lifecycle set /human_detector activate
@@ -50,30 +87,38 @@ ros2 lifecycle set /human_detector activate
 ## Interface
 
 ### Input
+
 The node utilizes the following topics as inputs:
+
 - `/camera/depth/image_rect_raw` (Image) - for capturing the RGB image
 - `/camera/depth/image_rect_raw` (Image) - for capturing the depth image
 - `/camera/depth/camera_info` (CameraInfo) - for capturing camera information
 
 ### Constraints
+
 There is one strong limitation rgb image and depth image must be same size.
 
 ### Output
+
 The node publishes the following data:
+
 - Transform to detected human
 - `image_with_detected_human` (Image) - for publishing the image with the detected human if publish_image_with_detected is set to true.
 
 ### Parameters
+
 The node uses the following parameters:
-- `camera_frame_id` - Name of the frame containing the camera. Default is set to **camera_link**.
-- `detected_human_frame_id` - Name of the frame containing the detected human. Default is set to **detected_human**.
-- `detected_human_transform_frequency` - Frequency of publishing the transform to the detected human. Default is set to **10Hz**.
-- `publish_image_with_detected` - If Topic with detected human should be published or not. If true image with detected person will be published on the
-`image_with_detected_human` topic.
+
+- `camera_frame_id` - Name of the frame containing the camera. Default is set to**camera_link**.
+- `detected_human_frame_id` - Name of the frame containing the detected human. Default is set to**detected_human**.
+- `detected_human_transform_frequency` - Frequency of publishing the transform to the detected human. Default is set to**10Hz**.
+- `publish_image_with_detected` - If Topic with detected human should be published or not. If true image with detected person will be published on the`image_with_detected_human` topic.
 - `min_detection_confidence` - Mediapipe parameter. Minimum confidence value ([0.0, 1.0]) from the person-detection model for
-    the detection to be considered successful. Default to 0.5
+  the detection to be considered successful. Default to 0.5
 - `min_tracking_confidence` - Mediapipe parameter. Minimum confidence value ([0.0, 1.0]) from the landmark-tracking model for
-    the pose landmarks to be considered tracked successfully, or otherwise person detection will be invoked automatically on the next input image.
+  the pose landmarks to be considered tracked successfully, or otherwise person detection will be invoked automatically on the next input image.
 
 ## Devcontainer
+
 For development and running package devcontainer can be used. All dependencies already installed via in the container.
+
