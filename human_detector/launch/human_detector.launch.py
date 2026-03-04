@@ -1,8 +1,10 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, EmitEvent
+from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler
 from launch.events.matchers import matches_action
+from launch.event_handlers import OnProcessStart
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import LifecycleNode
+from launch_ros.event_handlers import OnStateTransition
 from launch_ros.events.lifecycle import ChangeState
 from lifecycle_msgs.msg import Transition
 from ament_index_python.packages import get_package_share_directory
@@ -15,7 +17,7 @@ def generate_launch_description():
 
     # Launcher Arguments
     use_sim_arg = DeclareLaunchArgument("use_sim_time", default_value="True", description="Use sim time.")
-    namespace_arg = DeclareLaunchArgument("namespace", default_value="", description="Namespace for the human detector node.")
+    namespace_arg = DeclareLaunchArgument("namespace", default_value="a200_0000", description="Namespace for the human detector node.")
 
 
     # Map fully qualified names to relative ones so the node's namespace can be prepended.
@@ -36,10 +38,33 @@ def generate_launch_description():
         remappings=remappings
     )
 
-    move_human_detector_to_configure_state_event = EmitEvent(
-        event=ChangeState(
-            lifecycle_node_matcher=matches_action(human_detector),
-            transition_id=Transition.TRANSITION_CONFIGURE,
+    # 1) Configure AFTER the process starts
+    configure_on_start = RegisterEventHandler(
+        OnProcessStart(
+            target_action=human_detector,
+            on_start=[
+                EmitEvent(
+                    event=ChangeState(
+                        lifecycle_node_matcher=matches_action(human_detector),
+                        transition_id=Transition.TRANSITION_CONFIGURE,
+                    )
+                )
+            ],
+        )
+    )
+    # 2) Activate AFTER it successfully reaches "inactive" (i.e., configured)
+    activate_on_inactive = RegisterEventHandler(
+        OnStateTransition(
+            target_lifecycle_node=human_detector,
+            goal_state="inactive",
+            entities=[
+                EmitEvent(
+                    event=ChangeState(
+                        lifecycle_node_matcher=matches_action(human_detector),
+                        transition_id=Transition.TRANSITION_ACTIVATE,
+                    )
+                )
+            ],
         )
     )
 
@@ -50,6 +75,7 @@ def generate_launch_description():
             use_sim_arg,
             namespace_arg,
             human_detector,
-            move_human_detector_to_configure_state_event,
+            configure_on_start,
+            activate_on_inactive,
         ]
     )

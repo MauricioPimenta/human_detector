@@ -14,6 +14,8 @@ from rclpy.qos_overriding_options import QoSOverridingOptions
 from rclpy.qos import qos_profile_sensor_data
 from tf2_ros.transform_broadcaster import TransformBroadcaster
 from message_filters import ApproximateTimeSynchronizer, Subscriber
+import traceback
+from rclpy.lifecycle import TransitionCallbackReturn
 
 
 def mm_to_m(mm):
@@ -35,22 +37,37 @@ class HumanDetector(LifecycleNode):
         self.camera_info = None
 
     def on_configure(self, previous_state: LifecycleState):
-        self.get_logger().info("IN on_configure")
-        self.parameters = self.param_listener.get_params()
-        self.log_parameters()
-        self.time_approximation_slope = self.parameters.time_approximation_slope
-        self.person_pose_estimator = mp.solutions.pose.Pose(
-            min_detection_confidence=self.parameters.min_detection_confidence,
-            min_tracking_confidence=self.parameters.min_tracking_confidence,
-        )
-        self.initialize_sync_subscribers()
+        try:
+            self.parameters = self.param_listener.get_params()
+            self.log_parameters()
+            self.time_approximation_slope = self.parameters.time_approximation_slope
 
-        if self.parameters.publish_image_with_detected:
-            self.image_with_detected_human_pub = self.create_publisher(Image, "image_with_detected_human", 10)
-        self.timer = self.create_timer(1 / self.parameters.detected_human_transform_frequency, self.timer_callback)
-        self.timer.cancel()
+            self.get_logger().info("Creating MediaPipe Pose() ...")
+            self.person_pose_estimator = mp.solutions.pose.Pose(
+                min_detection_confidence=self.parameters.min_detection_confidence,
+                min_tracking_confidence=self.parameters.min_tracking_confidence,
+            )
+            self.get_logger().info("MediaPipe Pose() created OK")
 
-        return TransitionCallbackReturn.SUCCESS
+            self.initialize_sync_subscribers()
+            self.get_logger().info("Subscribers initialized OK")
+
+            if self.parameters.publish_image_with_detected:
+                self.image_with_detected_human_pub = self.create_publisher(
+                    Image, "image_with_detected_human", 10
+                )
+
+            self.timer = self.create_timer(
+                1 / self.parameters.detected_human_transform_frequency,
+                self.timer_callback
+            )
+            self.timer.cancel()
+
+            return TransitionCallbackReturn.SUCCESS
+
+        except Exception:
+            self.get_logger().error("on_configure failed:\n" + traceback.format_exc())
+            return TransitionCallbackReturn.ERROR
 
     def initialize_sync_subscribers(self):
         sync_topics = [
@@ -59,21 +76,21 @@ class HumanDetector(LifecycleNode):
                 Image,
                 "sensors/camera_0/color/image",
                 qos_profile=qos_profile_sensor_data,
-                qos_overriding_options=QoSOverridingOptions.with_default_policies(),
+                #qos_overriding_options=QoSOverridingOptions.with_default_policies(),
             ),
             Subscriber(
                 self,
                 Image,
                 "sensors/camera_0/depth/image",
                 qos_profile=qos_profile_sensor_data,
-                qos_overriding_options=QoSOverridingOptions.with_default_policies(),
+                #qos_overriding_options=QoSOverridingOptions.with_default_policies(),
             ),
             Subscriber(
                 self,
                 CameraInfo,
                 "sensors/camera_0/depth/camera_info",
                 qos_profile=qos_profile_sensor_data,
-                qos_overriding_options=QoSOverridingOptions.with_default_policies(),
+                #qos_overriding_options=QoSOverridingOptions.with_default_policies(),
             ),
         ]
 

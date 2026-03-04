@@ -4,21 +4,25 @@ human_detector_parameters:
     default_value: "camera_0_color_optical_frame"
     read_only: false #true
     description: "Name of frame containing the camera."
+  
   detected_human_frame_id:
     type: string
     default_value: "detected_human"
     read_only: true
     description: "Name of frame containing detected human."
+  
   detected_human_transform_frequency:
     type: int
     default_value: 10
     read_only: true
     description: "Frequency of publishing transform to detected human."
+  
   publish_image_with_detected:
     type: bool
     default_value: true
     read_only: true
     description: "If Topic with detected human should be published or not."
+
   min_detection_confidence:
     type: double
     default_value: 0.5
@@ -27,6 +31,7 @@ human_detector_parameters:
                   the detection to be considered successful. Default to 0.5"
     validation:
       bounds<>: [0.0, 1.0]
+
   min_tracking_confidence:
     type: double
     default_value: 0.5
@@ -36,6 +41,7 @@ human_detector_parameters:
                   invoked automatically on the next input image."
     validation:
       bounds<>: [0.0, 1.0]
+
   time_approximation_slope:
     type: double
     default_value: 0.05
