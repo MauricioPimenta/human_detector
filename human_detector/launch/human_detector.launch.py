@@ -14,14 +14,15 @@ import os
 def generate_launch_description():
     namespace = LaunchConfiguration("namespace")
     use_sim_time = LaunchConfiguration("use_sim_time")
-    mediapipe_venv = os.path.expanduser("~/venvs/mediapipe")
-    if not os.path.exists(mediapipe_venv):
+    try:
+        mediapipe_venv = os.path.expanduser("~/venvs/mediapipe")
+    except:
         try:
             mediapipe_venv = os.path.expanduser("~/venvs/mediapipe_venv")
-        except Exception as e:
+        except Exception as e2:
             raise RuntimeError(
                 "Could not find the mediapipe virtual environment. Please ensure it exists at ~/venvs/mediapipe or ~/venvs/mediapipe_venv."
-            ) from e
+            ) from e2
 
     venv_bin = os.path.join(mediapipe_venv, "bin")
     venv_site_packages = sorted(
