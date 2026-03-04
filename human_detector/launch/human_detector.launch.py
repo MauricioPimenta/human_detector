@@ -7,13 +7,22 @@ from launch_ros.actions import LifecycleNode
 from launch_ros.event_handlers import OnStateTransition
 from launch_ros.events.lifecycle import ChangeState
 from lifecycle_msgs.msg import Transition
-from ament_index_python.packages import get_package_share_directory
+import glob
 import os
 
 
 def generate_launch_description():
     namespace = LaunchConfiguration("namespace")
     use_sim_time = LaunchConfiguration("use_sim_time")
+    mediapipe_venv = os.path.expanduser("~/venvs/mediapipe")
+
+    venv_bin = os.path.join(mediapipe_venv, "bin")
+    venv_site_packages = sorted(
+        glob.glob(os.path.join(mediapipe_venv, "lib", "python*", "site-packages"))
+    )
+    pythonpath_entries = venv_site_packages[:]
+    if os.environ.get("PYTHONPATH"):
+        pythonpath_entries.append(os.environ["PYTHONPATH"])
 
     # Launcher Arguments
     use_sim_arg = DeclareLaunchArgument("use_sim_time", default_value="True", description="Use sim time.")
@@ -35,7 +44,12 @@ def generate_launch_description():
         parameters=[
             {"use_sim_time": use_sim_time},
         ],
-        remappings=remappings
+        remappings=remappings,
+        additional_env={
+            "VIRTUAL_ENV": mediapipe_venv,
+            "PATH": os.pathsep.join([venv_bin, os.environ.get("PATH", "")]),
+            "PYTHONPATH": os.pathsep.join(pythonpath_entries),
+        },
     )
 
     # 1) Configure AFTER the process starts
